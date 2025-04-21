@@ -4,17 +4,15 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-app.use(cors()); // ✅ allow cross-origin requests
-app.use(express.json()); // ✅ parse incoming JSON
+app.use(cors());
+app.use(express.json());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// 🔵 Health check route
 app.get('/', (req, res) => {
   res.send('✅ Server is running');
 });
 
-// 🧠 Chat endpoint
 app.post('/api/chat', async (req, res) => {
   console.log('🔵 Incoming messages:', req.body.messages);
 
@@ -22,7 +20,7 @@ app.post('/api/chat', async (req, res) => {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4',
+        model: 'gpt-4', // or 'gpt-3.5-turbo'
         messages: req.body.messages,
         temperature: 0.7,
       },
@@ -34,11 +32,14 @@ app.post('/api/chat', async (req, res) => {
       }
     );
 
-    console.log('🟢 OpenAI reply:', response.data.choices?.[0]?.message?.content);
+    console.log('🟢 OpenAI response:', response.data.choices?.[0]?.message?.content);
     res.json(response.data);
   } catch (error) {
-    console.error('🔴 Error communicating with OpenAI API:', error.message);
-    res.status(500).json({ error: 'Failed to fetch response from OpenAI API' });
+    console.error('🔴 Error communicating with OpenAI API:', error.response?.data || error.message);
+    res.status(500).json({
+      error: 'Failed to fetch response from OpenAI API',
+      detail: error.response?.data || error.message,
+    });
   }
 });
 
