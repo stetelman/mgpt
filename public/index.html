@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GPT Chat Widget</title>
+  <style>
+    #chat-widget {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 360px;
+      height: 520px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      font-family: sans-serif;
+      z-index: 9999;
+    }
+    #chat-messages {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+    .message {
+      margin: 0.5rem 0;
+    }
+    .user { color: #0057ff; font-weight: bold; }
+    .assistant { color: #333; }
+    #chat-input {
+      padding: 1rem;
+      border-top: 1px solid #ccc;
+    }
+    textarea {
+      width: 100%;
+      height: 60px;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: #0057ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-widget">
+    <div id="chat-messages"></div>
+    <div id="chat-input">
+      <textarea id="input" placeholder="Ask Mike anything..."></textarea>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const messages = [];
+    <!-- const endpoint = 'https://mgpt-cys7.onrender.com'; -->
+    const endpoint = '/api/chat'; 
+
+
+    async function sendMessage() {
+      const input = document.getElementById('input');
+      const content = input.value.trim();
+      if (!content) return;
+
+      messages.push({ role: 'user', content });
+      input.value = '';
+      renderMessages();
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages })
+        });
+        const data = await res.json();
+        const reply = data.choices?.[0]?.message?.content || 'No response';
+        messages.push({ role: 'assistant', content: reply });
+        renderMessages();
+      } catch (err) {
+        messages.push({ role: 'assistant', content: 'Error contacting server.' });
+        renderMessages();
+      }
+    }
+
+    function renderMessages() {
+      const chat = document.getElementById('chat-messages');
+      chat.innerHTML = messages.map(m =>
+        `<div class="message"><span class="${m.role}">${m.role}:</span> ${m.content}</div>`
+      ).join('');
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+</body>
+</html>
